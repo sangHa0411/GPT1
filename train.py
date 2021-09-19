@@ -51,9 +51,7 @@ def train(args) :
 
     # -- Data
     print('Load Raw Data')
-    version1_data = get_data(args.data_dir1)
-    version2_data = get_data(args.data_dir2)
-    data = version1_data + version2_data
+    data = get_data(args.data_dir)
 
     print('Extract Text Data')
     text_data = []
@@ -174,8 +172,7 @@ if __name__ == '__main__' :
     parser.add_argument('--batch_size', type=int, default=512, help='input batch size for training (default: 512)')
 
     # Container environment
-    parser.add_argument('--data_dir1', type=str, default='./Data/Version1.0')
-    parser.add_argument('--data_dir2', type=str, default='./Data/Version2.0')
+    parser.add_argument('--data_dir', type=str, default='./Data/Version1.0')
     parser.add_argument('--model_dir', type=str, default='./Model')
     parser.add_argument('--token_dir', type=str, default='./Token')
     parser.add_argument('--log_dir' , type=str , default='./Log')
