@@ -1,13 +1,8 @@
 import re
 import os
 import sentencepiece as spm
+from dataset import Token
 from enum import IntEnum
-
-class Token(IntEnum) :
-    PAD = 0
-    UNK = 1
-    SOS = 2
-    EOS = 3
 
 spm_templates= '--input={} \
 --pad_id={} \
