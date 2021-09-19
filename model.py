@@ -144,8 +144,8 @@ class DecoderBlock(nn.Module) :
         h_tensor = self.norm1_layer(in_tensor+mha_tensor)
         # feedforward sub layer
         ff_tensor = self.ff_layer(h_tensor)
-        ff_tensor = self.drop3_layer(ff_tensor)
-        o_tensor = self.norm3_layer(h_tensor+ff_tensor)
+        ff_tensor = self.drop2_layer(ff_tensor)
+        o_tensor = self.norm2_layer(h_tensor+ff_tensor)
         
         return o_tensor
 
