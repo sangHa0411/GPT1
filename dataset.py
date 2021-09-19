@@ -1,9 +1,14 @@
 import random
 import collections
-from preprocessor import Token
 import torch
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
+
+class Token(IntEnum) :
+    PAD = 0
+    UNK = 1
+    SOS = 2
+    EOS = 3
 
 class GptDataset(Dataset) :
     def __init__(self, idx_data, max_size) :
