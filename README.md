@@ -17,6 +17,18 @@
 `-- train_tokenizer.py
 ```
 
+# Tokenizer Specification
+  1. Subword Tokenizer
+  2. Sentencepiece
+  3. Vocab size : 24000
+  4. Special Token
+      * PAD : 0
+      * UNK : 1
+      * SOS : 2
+      * EOS : 3
+      * SEP : 24000
+
+
 # Model Specification
   1. Layer size : 6
   2. Embedding size : 512
