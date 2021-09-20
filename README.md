@@ -30,11 +30,12 @@
 
 
 # Model Specification
-  1. Layer size : 6
-  2. Embedding size : 512
-  3. Hidden size : 2048
-  4. Head size : 8
-  5. Sequence size : 12
+  1. GPT1 - Transformer Decoder
+  2. Layer size : 6
+  3. Embedding size : 512
+  4. Hidden size : 2048
+  5. Head size : 8
+  6. Sequence size : 12
 
 # Training 
   1. Epoch : 100
