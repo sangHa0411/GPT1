@@ -34,19 +34,46 @@ class LookAheadMask(nn.Module) :
         lookahead_mask = torch.maximum(pad_mask, lookahead_mask)
         return lookahead_mask
 
-class PositionalEmbedding(nn.Module) :
-    def __init__(self, max_len, d_model) :
-        super(PositionalEmbedding , self).__init__()
+
+class PositionalEncoding(nn.Module) :
+    def __init__(self, max_len, d_model, cuda_flag) :
+        super(PositionalEncoding , self).__init__()
         self.max_len = max_len
         self.d_model = d_model
-    
-        self.w = nn.Paramter(torch.sqrt(torch.tensor(d_model, dtype=torch.float, require_grad=False)))
-        self.pe = nn.Parameter(torch.randn(1, max_len, d_model), require_grad=True)
+        self.cuda_flag = cuda_flag
+        # w : weight
+        # pe : Encoding tensor
+        self.w = torch.sqrt(torch.tensor(d_model, dtype=torch.float32, requires_grad=False))
+        self.pe = self.get_embedding(max_len, d_model)
+        if cuda_flag == True :
+            self.w = self.w.cuda()
+            self.pe = self.pe.cuda()
+        
+    # Embedding tensor : (batch_size, sen_size, embedding_dim)
+    # Making Encoding tensor (1, sen_size, embedding_dim)
+    def get_embedding(self, pos_len, d_model) :
+        pos_vec = torch.arange(pos_len).float()
+        pos_vec = pos_vec.unsqueeze(1)
+
+        i_vec = torch.arange(d_model).float() / 2
+        i_vec = torch.floor(i_vec) * 2
+        i_vec = i_vec.unsqueeze(0) / d_model
+        i_vec = 1 / torch.pow(1e+4 , i_vec)
+
+        em = torch.mul(pos_vec, i_vec)
+        pe = torch.zeros(pos_len, d_model, requires_grad=False)
+        sin_em = torch.sin(em)
+        cos_em = torch.cos(em)
+
+        pe[:,::2] = sin_em[:,::2]
+        pe[:,1::2] = cos_em[:,1::2]
+
+        return pe.unsqueeze(0)
 
     # input tensor : (batch_size, sen_size, embedding_dim)
     def forward(self, in_tensor) :
-        sen_size = in_tensor.shape[1]                 
-        en_tensor = (in_tensor * self.w) + self.pe[:,:sen_size,:]
+        batch_size, seq_size, em_dim = in_tensor.shape                  
+        en_tensor = (in_tensor * self.w) + self.pe[:,:seq_size,:]
         return en_tensor
 
 # Multihead Attention Layer
@@ -163,7 +190,7 @@ class TransformerDecoder(nn.Module) :
         self.norm_rate = norm_rate
         
         self.em = nn.Embedding(num_embeddings=v_size, embedding_dim=d_model, padding_idx=0) # embedding
-        self.pos = PositionalEmbedding(max_size, d_model) # positional embedding
+        self.pos = PositionalEncoding(max_size, d_model, cuda_flag)
         self.pad = PaddingMask() # padding masking
         self.lookahead = LookAheadMask(cuda_flag) # lookahead masking
         
