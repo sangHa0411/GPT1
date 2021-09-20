@@ -128,7 +128,7 @@ def train(args) :
             optimizer.zero_grad()
         
             out_data = gpt_1(in_data)
-            out_data = torch.reshape(out_data, (-1,kor_v_size))
+            out_data = torch.reshape(out_data, (-1,kor_v_size+1))
 
             loss = criterion(out_data , label_data)
             acc = (torch.argmax(out_data, dim=-1) == label_data).float().mean()
@@ -158,18 +158,20 @@ def train(args) :
         scheduler.step()
         print('\nMean Loss : %.3f \t Mean Accuracy : %.3f\n' %(mean_loss.item(), mean_acc.item()))
     
+    
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
 
+    # Training argument
     parser.add_argument('--seed', type=int, default=777, help='random seed (default: 777)')
-    parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 200)')
+    parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train (default: 100)')
     parser.add_argument('--warmup_steps', type=int, default=2000, help='warmup steps of train (default: 2000)')
     parser.add_argument('--max_size', type=int, default=128, help='max size of sequence (default: 128)')
-    parser.add_argument('--layer_size', type=int, default=12, help='layer size of model (default: 12)')
-    parser.add_argument('--embedding_size', type=int, default=768, help='embedding size of token (default: 768)')
-    parser.add_argument('--hidden_size', type=int, default=3072, help='hidden size of position-wise layer (default: 3072)')
-    parser.add_argument('--head_size', type=int, default=12, help='head size of multi head attention (default: 12)')
-    parser.add_argument('--batch_size', type=int, default=512, help='input batch size for training (default: 512)')
+    parser.add_argument('--layer_size', type=int, default=6, help='layer size of model (default: 6)')
+    parser.add_argument('--embedding_size', type=int, default=512, help='embedding size of token (default: 512)')
+    parser.add_argument('--hidden_size', type=int, default=2048, help='hidden size of position-wise layer (default: 2048)')
+    parser.add_argument('--head_size', type=int, default=8, help='head size of multi head attention (default: 8)')
+    parser.add_argument('--batch_size', type=int, default=128, help='batch size for training (default: 128)')
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default='./Data/Version1.0')
