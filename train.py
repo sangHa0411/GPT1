@@ -1,5 +1,6 @@
 import sys
 import random
+import re
 import argparse
 import multiprocessing
 import numpy as np
@@ -13,9 +14,13 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from model import TransformerDecoder
 from dataset import *
-from collator import *
 from loader import *
-from preprocessor import *
+from tokenizer import *
+
+def preprocess_kor(sen) :
+    sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
+    sen = re.sub(' {2,}' , ' ' , sen)
+    return sen
 
 def schedule_fn(epoch, d_model, init_lr, warmup_steps) :
     step_num = epoch + 1
@@ -57,7 +62,7 @@ def train(args) :
     text_data = []
     for json_data in tqdm(data) :
         text_list = preprocess_data(json_data)
-        text_data += text_list
+        text_data.extend(text_list)
 
     # -- Tokenizer & Encoder
     kor_tokenizer = get_spm(args.token_dir, 'kor_tokenizer.model')
@@ -83,7 +88,8 @@ def train(args) :
    
     # -- Model
     # Transformer Decoder
-    gpt_1 = TransformerDecoder(layer_size=args.layer_size, 
+    gpt_1 = TransformerDecoder(
+        layer_size=args.layer_size, 
         max_size=args.max_size, 
         v_size=kor_v_size, 
         d_model=args.embedding_size,
@@ -167,10 +173,10 @@ if __name__ == '__main__' :
     parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train (default: 100)')
     parser.add_argument('--warmup_steps', type=int, default=2000, help='warmup steps of train (default: 2000)')
     parser.add_argument('--max_size', type=int, default=128, help='max size of sequence (default: 128)')
-    parser.add_argument('--layer_size', type=int, default=6, help='layer size of model (default: 6)')
-    parser.add_argument('--embedding_size', type=int, default=512, help='embedding size of token (default: 512)')
-    parser.add_argument('--hidden_size', type=int, default=2048, help='hidden size of position-wise layer (default: 2048)')
-    parser.add_argument('--head_size', type=int, default=8, help='head size of multi head attention (default: 8)')
+    parser.add_argument('--layer_size', type=int, default=12, help='layer size of model (default: 12)')
+    parser.add_argument('--embedding_size', type=int, default=768, help='embedding size of token (default: 768)')
+    parser.add_argument('--hidden_size', type=int, default=3072, help='hidden size of position-wise layer (default: 3072)')
+    parser.add_argument('--head_size', type=int, default=12, help='head size of multi head attention (default: 12)')
     parser.add_argument('--batch_size', type=int, default=128, help='batch size for training (default: 128)')
 
     # Container environment
@@ -181,3 +187,4 @@ if __name__ == '__main__' :
 
     args = parser.parse_args()
     train(args)
+
