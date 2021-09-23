@@ -12,7 +12,7 @@
 |-- dataset.py
 |-- loader.py
 |-- model.py
-|-- preprocessor.py
+|-- tokenizer.py
 |-- train.py
 `-- train_tokenizer.py
 ```
@@ -20,22 +20,21 @@
 # Tokenizer Specification
   1. Subword Tokenizer
   2. Sentencepiece
-  3. Vocab size : 24000
+  3. Vocab size : 32000
   4. Special Token
       * PAD : 0
       * UNK : 1
       * SOS : 2
       * EOS : 3
-      * SEP : 24000
 
 
 # Model Specification
   1. GPT1 - Transformer Decoder
-  2. Layer size : 6
-  3. Embedding size : 512
-  4. Hidden size : 2048
-  5. Head size : 8
-  6. Sequence size : 12
+  2. Layer size : 12
+  3. Embedding size : 768
+  4. Hidden size : 3072
+  5. Head size : 12
+  6. Sequence size : 128
 
 # Training 
   1. Epoch : 100
