@@ -1,7 +1,5 @@
 import os
 import json
-from tqdm import tqdm
-from preprocessor import *
 
 def read_data(file_path) :
     with open(file_path, 'r', encoding='utf-8') as json_file:
@@ -11,7 +9,7 @@ def read_data(file_path) :
 def get_data(dir_path) :
     data_list = []
     file_list = os.listdir(dir_path)
-    for file in tqdm(file_list) :
+    for file in file_list :
         if file.endswith('.json') :
             try :
                 file_path = os.path.join(dir_path, file)
