@@ -1,8 +1,7 @@
-import re
+
 import os
 import sentencepiece as spm
 from dataset import Token
-from enum import IntEnum
 
 spm_templates= '--input={} \
 --pad_id={} \
@@ -14,10 +13,6 @@ spm_templates= '--input={} \
 --character_coverage={} \
 --model_type={}'
 
-def preprocess_kor(sen) :
-    sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
-    sen = re.sub(' {2,}' , ' ' , sen)
-    return sen
 
 def write_data(text_list, text_path, preprocess) :
     with open(text_path, 'w') as f :
@@ -36,7 +31,6 @@ def train_spm(dir_path, data, model, vocab_size) :
             vocab_size, 
             1.0, 
             'unigram')
-
     spm.SentencePieceTrainer.Train(spm_cmd)
 
 def get_spm(dir_path, model) :
