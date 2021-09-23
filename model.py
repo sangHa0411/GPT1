@@ -1,6 +1,5 @@
 
 import numpy as np
-from numpy.core.numeric import require
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
