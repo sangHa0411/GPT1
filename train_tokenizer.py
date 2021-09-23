@@ -1,59 +1,35 @@
 import os
-import sys
-import json
+import re
 import argparse
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
-from preprocessor import *
+from tokenizer import *
+from loader import *
 
-def read(file_path) :
-    with open(file_path, 'r', encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
-    return json_data
-
-def split_data(json_data) :
-    doc_list = [doc['paragraph'] for doc in json_data['document']]
-    sen_data = []
-    for doc in doc_list :
-        text_list = [text['form'] for text in doc] 
-        sen_list = [sent_tokenize(text) for text in text_list]
-        sen_list = sum(sen_list, [])
-        sen_data += sen_list
-    return sen_data
-
-def get_data(dir_path) :
-    data_list = []
-    file_list = os.listdir(dir_path)
-    for file in tqdm(file_list) :
-        if file.endswith('.json') :
-            try :
-                file_path = os.path.join(dir_path, file)
-                data = read(file_path)
-                data_list.append(data)
-            except UnicodeDecodeError :
-                continue
-            except json.JSONDecodeError :
-                continue 
-    return data_list
+def preprocess_kor(sen) :
+    sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
+    sen = re.sub(' {2,}' , ' ' , sen)
+    return sen
 
 def train(args) :
     print('Get Newspaper Data')
     data = get_data(args.data)
     
     text_path = os.path.join(args.dir, args.text)
-    print('Preprocess Raw Data')
+    print('Extract Text Data')
     text_data = []
     for json_data in tqdm(data) :
-        text_list = split_data(json_data)
+        text_list = preprocess_data(json_data)
         text_data.extend(text_list)
-    
-    min_size = args.min_sen_size
-    max_size = args.max_sen_size
-    print('Filtering Data by length')
-    text_data = [text for text in text_data if (len(text) >= min_size and len(text) <= max_size)]
 
+    print('Tokenize Text Data')
+    sen_data = []
+    for text in tqdm(text_data) :
+        sen_list = [sen for sen in sent_tokenize(text) if (len(sen) >= args.min_sen_size and len(sen) <= args.max_sen_size)]
+        sen_data.extend(sen_list)
+    
     print('Write Preprocessed Data')
-    write_data(text_data, text_path, preprocess_kor)
+    write_data(sen_data, text_path, preprocess_kor)
 
     print('Train Tokenizer')
     train_spm(args.dir, args.text, args.model, args.token_size)
