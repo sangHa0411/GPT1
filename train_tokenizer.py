@@ -1,8 +1,8 @@
 import os
 import re
 import argparse
+import kss
 from tqdm import tqdm
-from nltk.tokenize import sent_tokenize
 from tokenizer import *
 from loader import *
 
@@ -25,7 +25,7 @@ def train(args) :
     print('Tokenize Text Data')
     sen_data = []
     for text in tqdm(text_data) :
-        sen_list = [sen for sen in sent_tokenize(text) if (len(sen) >= args.min_sen_size and len(sen) <= args.max_sen_size)]
+        sen_list = [sen for sen in kss.split_sentences(text) if (len(sen) >= args.min_sen_size and len(sen) <= args.max_sen_size)]
         sen_data.extend(sen_list)
     
     print('Write Preprocessed Data')
