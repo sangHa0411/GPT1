@@ -165,7 +165,7 @@ class DecoderBlock(nn.Module) :
     def forward(self, in_tensor, mask_tensor) :
         # masked multihead attention sub layer
         # query : in_tensor, key : in_tensor, value : in_tensor, mask ; look ahead mask
-        mha_tensor = self.m_mha_layer(in_tensor, in_tensor, in_tensor, mask_tensor)
+        mha_tensor = self.mha_layer(in_tensor, in_tensor, in_tensor, mask_tensor)
         mha_tensor = self.drop1_layer(mha_tensor)
         h_tensor = self.norm1_layer(in_tensor+mha_tensor)
         # feedforward sub layer
