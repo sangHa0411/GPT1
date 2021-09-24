@@ -8,6 +8,7 @@ spm_templates= '--input={} \
 --bos_id={} \
 --eos_id={} \
 --unk_id={} \
+--user_defined_symbols={} \
 --model_prefix={} \
 --vocab_size={} \
 --character_coverage={} \
@@ -27,6 +28,7 @@ def train_spm(dir_path, data, model, vocab_size) :
             Token.SOS, 
             Token.EOS, 
             Token.UNK, 
+            '<sep>', 
             os.path.join(dir_path, model), 
             vocab_size, 
             1.0, 
