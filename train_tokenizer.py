@@ -6,6 +6,8 @@ from tqdm import tqdm
 from tokenizer import *
 from loader import *
 
+MAX_LEN = 200
+
 def preprocess_kor(sen) :
     sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
     sen = re.sub(' {2,}' , ' ' , sen)
@@ -25,8 +27,12 @@ def train(args) :
     print('Tokenize Text Data')
     sen_data = []
     for text in tqdm(text_data) :
-        sen_list = [sen for sen in kss.split_sentences(text) if (len(sen) >= args.min_sen_size and len(sen) <= args.max_sen_size)]
-        sen_data.extend(sen_list)
+        if len(text) >= MAX_LEN :
+            sen_list = kss.split_sentences(text)
+            sen_data.extend(sen_list)
+        else :
+            sen_data.append(text)
+
     
     print('Write Preprocessed Data')
     write_data(sen_data, text_path, preprocess_kor)
@@ -41,8 +47,6 @@ if __name__ == '__main__' :
     parser.add_argument('--text', type=str, default='kor_data.txt',  help='Text data file name')
     parser.add_argument('--model', type=str, default='kor_tokenizer',  help='Tokenizer file name')
     parser.add_argument('--dir', type=str, default='./Token',  help='File Writing Directory')
-    parser.add_argument('--max_sen_size', type=int, default=300, help='Maximum of setnence size (default: 300)')
-    parser.add_argument('--min_sen_size', type=int, default=10, help='Minimum of sentence size (default: 10)')
     parser.add_argument('--token_size', type=int, default=32000, help='Token Size (default: 32000)')
     args = parser.parse_args()
     train(args)
