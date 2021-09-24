@@ -1,13 +1,10 @@
 import os
 import re
 import argparse
+import kss
 from tqdm import tqdm
-from nltk.tokenize import sent_tokenize
 from tokenizer import *
 from loader import *
-
-MAX_LEN = 300
-MIN_LEN = 100
 
 def preprocess_kor(sen) :
     sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
@@ -28,8 +25,9 @@ def train(args) :
     print('Tokenize Text Data')
     sen_data = []
     for text in tqdm(text_data) :
-        sen_list = [sen for sen in sent_tokenize(text) if len(sen) >= MIN_LEN and len(sen) <= MAX_LEN]
+        sen_list = kss.split_sentences(text)
         sen_data.extend(sen_list)
+        
     print('Size of Sentence Data : %d' %len(sen_data))
 
     print('Write Preprocessed Data')
