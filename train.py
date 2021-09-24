@@ -71,6 +71,7 @@ def train(args) :
     print('Encode Text Data')
     idx_data = []
     for text in tqdm(text_data) :
+        text = preprocess_kor(text)
         idx_list = kor_tokenizer.encode_as_ids(text)
         idx_data.append(idx_list)
 
@@ -177,7 +178,7 @@ if __name__ == '__main__' :
     parser.add_argument('--embedding_size', type=int, default=768, help='embedding size of token (default: 768)')
     parser.add_argument('--hidden_size', type=int, default=3072, help='hidden size of position-wise layer (default: 3072)')
     parser.add_argument('--head_size', type=int, default=12, help='head size of multi head attention (default: 12)')
-    parser.add_argument('--batch_size', type=int, default=128, help='batch size for training (default: 128)')
+    parser.add_argument('--batch_size', type=int, default=64, help='batch size for training (default: 64)')
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default='./Data/Version1.0')
