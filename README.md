@@ -38,13 +38,13 @@
   3. Embedding size : 768
   4. Hidden size : 3072
   5. Head size : 12
-  6. Sequence size : 128
+  6. Sequence size : 256
 
 # Training 
   1. Epoch : 100
-  2. Warmup staeps : 2000
+  2. Warmup staps : 2000
   3. Optimizer : Adam
-  4. Batch size : 128
+  4. Batch size : 64
 
 # Source
   1. 모두의 말뭉치 : https://corpus.korean.go.kr
