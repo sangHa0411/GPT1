@@ -7,10 +7,10 @@ def read_data(file_path) :
         json_data = json.load(json_file)
     return json_data
 
-def get_data(dir_path) :
+def get_data(dir_path, size) :
     data_list = []
     file_list = os.listdir(dir_path)
-    for file in tqdm(file_list) :
+    for file in tqdm(file_list[:size]) :
         if file.endswith('.json') :
             try :
                 file_path = os.path.join(dir_path, file)

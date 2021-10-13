@@ -4,11 +4,11 @@ import sentencepiece as spm
 from dataset import Token
 
 spm_templates= '--input={} \
+--user_defined_symbols=[CLS],[SEP] \
 --pad_id={} \
 --bos_id={} \
 --eos_id={} \
 --unk_id={} \
---user_defined_symbols={} \
 --model_prefix={} \
 --vocab_size={} \
 --character_coverage={} \
