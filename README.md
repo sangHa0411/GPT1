@@ -28,6 +28,8 @@
       * UNK : 1
       * SOS : 2
       * EOS : 3
+      * CLS : 4
+      * SEP : 5
 
 
 # Model Specification
