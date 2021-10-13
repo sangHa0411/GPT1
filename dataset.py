@@ -42,11 +42,9 @@ class GptCollator:
             
         batch_key = list(batch_map.keys())
         batch_key = sorted(batch_key, key=lambda x : x, reverse=True) 
-        # sorting idx list based on size group
         for key in batch_key :
             idx_list.extend(batch_map[key])
     
-        # slicing batch_size
         for i in range(0, self.data_size, self.batch_size) :
             batch_index.append(idx_list[i:i+self.batch_size])
     
