@@ -3,18 +3,20 @@
 # Data Structure
 ```
 |-- Data
-|-- Log
-|-- Model
-|-- Token
-|   |-- kor_data.txt
-|   |-- kor_tokenizer.model
-|   `-- kor_tokenizer.vocab
-|-- dataset.py
-|-- loader.py
-|-- model.py
-|-- tokenizer.py
-|-- train.py
-`-- train_tokenizer.py
+├── dataset.py
+├── loader.py
+├── model.py
+├── preprocessor.py
+├── README.md
+├── scheduler.py
+├── Tokenizer
+│   ├── kor_newspaper.txt
+│   ├── tokenizer.model
+│   └── tokenizer.vocab
+├── tokenizer.py
+├── train.py
+└── train_tokenizer.py
+
 ```
 
 # Tokenizer Specification
