@@ -1,6 +1,7 @@
 import random
 import collections
 import torch
+from enum import IntEnum
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 

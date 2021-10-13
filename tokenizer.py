@@ -14,29 +14,24 @@ spm_templates= '--input={} \
 --character_coverage={} \
 --model_type={}'
 
-
-def write_data(text_list, text_path, preprocess) :
+def write_data(text_list, text_path) :
     with open(text_path, 'w') as f :
         for sen in text_list :
-            sen = preprocess(sen)
             f.write(sen + '\n')
 
-def train_spm(dir_path, data, model, vocab_size) :
-    text_path = os.path.join(dir_path, data)
+def train_spm(text_path, model_path, vocab_size) :
     spm_cmd = spm_templates.format(text_path, 
-            Token.PAD,
-            Token.SOS, 
-            Token.EOS, 
-            Token.UNK, 
-            '<sep>', 
-            os.path.join(dir_path, model), 
-            vocab_size, 
-            1.0, 
-            'unigram')
+        Token.PAD,
+        Token.SOS, 
+        Token.EOS, 
+        Token.UNK, 
+        model_path, 
+        vocab_size, 
+        1.0, 
+        'bpe')
     spm.SentencePieceTrainer.Train(spm_cmd)
 
-def get_spm(dir_path, model) :
-    model_path = os.path.join(dir_path, model)
+def get_spm(model_path) :
     if os.path.exists(model_path) :
         sp = spm.SentencePieceProcessor()
         sp.Load(model_path)

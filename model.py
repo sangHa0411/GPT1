@@ -206,10 +206,7 @@ class TransformerDecoder(nn.Module) :
             if p.dim() > 1 :
                 nn.init.xavier_uniform_(p)
    
-    def forward(self, in_tensor) :
-        # masking tensor
-        de_pad_mask = self.pad(in_tensor)
-        de_lookahead_mask = self.lookahead(de_pad_mask)
+    def forward(self, in_tensor, mask_tensor) :
         # decoder input tensor
         em_tensor = self.em(in_tensor) # embedding
         de_tensor = self.pos(em_tensor) # positional encoding
@@ -217,7 +214,7 @@ class TransformerDecoder(nn.Module) :
         
         tensor_ptr = de_tensor
         for i in range(self.layer_size) :
-            tensor_ptr = self.de_blocks[i](tensor_ptr, de_lookahead_mask)
+            tensor_ptr = self.de_blocks[i](tensor_ptr, mask_tensor)
         o_tensor = self.o_layer(tensor_ptr)
         
         return o_tensor
