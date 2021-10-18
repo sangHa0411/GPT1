@@ -8,7 +8,7 @@ from konlpy.tag import Mecab
 
 def make(args) :
     sys.path.append('../')
-    from tokenizer import train_spm
+    from tokenizer import write_data, train_spm
     from loader import get_data, preprocess_data
     from preprocessor import SenPreprocessor
 
@@ -49,10 +49,10 @@ def make(args) :
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, default='./Data', help='Korean Newspaper Data directory')
+    parser.add_argument('--data_dir', type=str, default='../../Data', help='Korean Newspaper Data directory')
     parser.add_argument('--max_size', type=int, default=256, help='max length of sentence')
     parser.add_argument('--file_size', type=int, default=10, help='size of newspaper file')
-    parser.add_argument('--tokenizer_dir', type=str, default='./Tokenizer',  help='File Writing Directory')
+    parser.add_argument('--tokenizer_dir', type=str, default='./',  help='File Writing Directory')
     parser.add_argument('--token_size', type=int, default=35000, help='Token Size (default: 35000)')
     args = parser.parse_args()
 

@@ -169,7 +169,7 @@ def train(args) :
             'model_state_dict' : gpt_1.state_dict() , 
             'loss' : mean_loss.item() , 
             'acc' : mean_acc.item()} , 
-            f'./Model/checkpoint_gpt.pt') 
+            os.path.join(args.model_dir, 'gpt1_checkpoint.pt')) 
 
         print('\nMean Loss : %.3f \t Mean Accuracy : %.3f\n' %(mean_loss.item(), mean_acc.item()))
     
