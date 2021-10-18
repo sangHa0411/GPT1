@@ -3,18 +3,20 @@
 # Data Structure
 ```
 |-- Data
-|-- Log
-|-- Model
-|-- Token
-|   |-- kor_data.txt
-|   |-- kor_tokenizer.model
-|   `-- kor_tokenizer.vocab
-|-- dataset.py
-|-- loader.py
-|-- model.py
-|-- tokenizer.py
-|-- train.py
-`-- train_tokenizer.py
+├── dataset.py
+├── loader.py
+├── model.py
+├── preprocessor.py
+├── README.md
+├── scheduler.py
+├── Tokenizer
+│   ├── kor_newspaper.txt
+│   ├── tokenizer.model
+│   └── tokenizer.vocab
+├── tokenizer.py
+├── train.py
+└── train_tokenizer.py
+
 ```
 
 # Tokenizer Specification
@@ -26,6 +28,8 @@
       * UNK : 1
       * SOS : 2
       * EOS : 3
+      * CLS : 4
+      * SEP : 5
 
 
 # Model Specification
@@ -34,13 +38,13 @@
   3. Embedding size : 768
   4. Hidden size : 3072
   5. Head size : 12
-  6. Sequence size : 128
+  6. Sequence size : 256
 
 # Training 
   1. Epoch : 100
-  2. Warmup staeps : 2000
+  2. Warmup staps : 2000
   3. Optimizer : Adam
-  4. Batch size : 128
+  4. Batch size : 64
 
 # Source
   1. 모두의 말뭉치 : https://corpus.korean.go.kr
