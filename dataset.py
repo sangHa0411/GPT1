@@ -54,9 +54,16 @@ class GptCollator:
         return batch_index
     
     def __call__(self, batch_samples):   
-        batch_tensor = []
+        batch_ids = []
+        batch_pos = []
         for idx_list in batch_samples:
-            batch_tensor.append(torch.tensor(idx_list + [Token.PAD]))
-        batch_tensor = pad_sequence(batch_tensor, batch_first=True, padding_value=Token.PAD)
+            batch_ids.append(torch.tensor(idx_list + [Token.PAD]))
+            batch_pos.append(torch.arange(1,len(idx_list)+1))
+
+        batch_ids_tensor = pad_sequence(batch_ids, batch_first=True, padding_value=Token.PAD)
+        batch_pos_tensor = pad_sequence(batch_pos, batch_first=True, padding_value=Token.PAD)
         
-        return {'in' : batch_tensor[:,:-1], 'out' : batch_tensor[:,1:]}
+        return {'in' : batch_ids_tensor[:,:-1], 
+            'pos' : batch_pos_tensor, 
+            'out' : batch_ids_tensor[:,1:]
+        }
