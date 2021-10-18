@@ -12,23 +12,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from model import TransformerDecoder
+from nltk.tokenize import sent_tokenize
+from konlpy.tag import Mecab
+from model import PaddingMask, LookAheadMask, TransformerDecoder
+
 from dataset import *
 from loader import *
-from tokenizer import *
-
-def preprocess_kor(sen) :
-    sen = re.sub('[^가-힣0-9 \',.!?]' , '', sen)
-    sen = re.sub(' {2,}' , ' ' , sen)
-    return sen
-
-def schedule_fn(epoch, d_model, init_lr, warmup_steps) :
-    step_num = epoch + 1
-    val1 = d_model ** (-0.5)
-    arg1 = step_num ** (-0.5)
-    arg2 = (warmup_steps ** (-1.5)) * step_num
-    val2 = min(arg1 , arg2) 
-    return (val1 * val2) / init_lr
+from scheduler import *
+from preprocessor import *
 
 def progressLearning(value, endvalue, loss, acc, bar_length=50):
     percent = float(value + 1) / endvalue
@@ -56,7 +47,7 @@ def train(args) :
 
     # -- Data
     print('Load Raw Data')
-    data = get_data(args.data_dir)
+    data = get_data(args.data_dir, args.file_size)
 
     print('Extract Text Data')
     text_data = []
@@ -65,19 +56,26 @@ def train(args) :
         text_data.extend(text_list)
 
     # -- Tokenizer & Encoder
-    kor_tokenizer = get_spm(args.token_dir, 'kor_tokenizer.model')
-    kor_v_size = len(kor_tokenizer)
+    sys.path.append('./Tokenizer')
+    from tokenizer import *
+    mecab = Mecab()
+    sen_preprocessor = SenPreprocessor(mecab)
+    tokenizer = get_spm(os.path.join(args.token_dir, 'tokenizer.model'))
+    v_size = len(tokenizer)
 
     print('Encode Text Data')
     idx_data = []
     for text in tqdm(text_data) :
-        text = preprocess_kor(text)
-        idx_list = kor_tokenizer.encode_as_ids(text)
-        idx_data.append(idx_list)
+        text = sen_preprocessor(text)
+        if text != None :
+            idx_list = tokenizer.encode_as_ids(text)
+            idx_data.append(idx_list)
 
     # -- Dataset
     dset = GptDataset(idx_data, args.max_size)
     dset_len = [len(data) for data in dset]
+
+    print('Data Size : %d\n' %len(dset))
 
     # -- DataLoader
     collator = GptCollator(dset_len, args.batch_size)
@@ -88,11 +86,14 @@ def train(args) :
     )
    
     # -- Model
+    # Masking
+    padding_mask = PaddingMask()
+    lookahead_mask = LookAheadMask(use_cuda)
     # Transformer Decoder
     gpt_1 = TransformerDecoder(
         layer_size=args.layer_size, 
         max_size=args.max_size, 
-        v_size=kor_v_size, 
+        v_size=v_size, 
         d_model=args.embedding_size,
         num_heads=args.head_size,
         hidden_size=args.hidden_size,
@@ -101,15 +102,20 @@ def train(args) :
         cuda_flag=use_cuda
     ).to(device)
 
+    init_lr = 1e-4
+
     # -- Optimizer
-    optimizer = optim.Adam(gpt_1.parameters(), lr=1e-4, betas=(0.9,0.98), eps=1e-9)
+    optimizer = optim.Adam(gpt_1.parameters(), 
+        lr=init_lr, 
+        betas=(0.9,0.98), 
+        eps=1e-9,
+        weight_decay=args.weight_decay
+    )
 
     # -- Scheduler
+    schedule_fn = Scheduler(args.embedding_size, init_lr, args.warmup_steps)
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, 
-        lr_lambda = lambda epoch: schedule_fn(epoch = epoch,
-            d_model = args.embedding_size, 
-            init_lr = 1e-4, 
-            warmup_steps=args.warmup_steps)
+        lr_lambda = lambda epoch: schedule_fn(epoch)
     )
     
     # -- Logging
@@ -128,26 +134,31 @@ def train(args) :
         print('Epoch : %d/%d \t Learning Rate : %e' %(epoch, args.epochs, optimizer.param_groups[0]["lr"]))
         # training process
         for data in data_loader :
+            optimizer.zero_grad()
+            writer.add_scalar('learning_rate', optimizer.param_groups[0]["lr"], idx)
+
             in_data = data['in'].long().to(device)
+            mask_data = padding_mask(in_data)
+            mask_data = lookahead_mask(mask_data)
+
             label_data = data['out'].long().to(device)
             label_data = torch.reshape(label_data, (-1,))
 
-            optimizer.zero_grad()
-        
-            out_data = gpt_1(in_data)
-            out_data = torch.reshape(out_data, (-1,kor_v_size+1))
+            out_data = gpt_1(in_data, mask_data)
+            out_data = torch.reshape(out_data, (-1,v_size))
 
             loss = criterion(out_data , label_data)
             acc = (torch.argmax(out_data, dim=-1) == label_data).float().mean()
 
             loss.backward()
             optimizer.step()
+            scheduler.step()
         
             progressLearning(idx, len(data_loader), loss.item(), acc.item())
             mean_loss += loss
             mean_acc += acc
 
-            if (idx + 1) % 10 == 0 :
+            if (idx + 1) % 100 == 0 :
                 writer.add_scalar('train/loss', loss.item(), log_count)
                 writer.add_scalar('train/acc', acc.item(), log_count)
                 log_count += 1
@@ -162,7 +173,6 @@ def train(args) :
             'acc' : mean_acc.item()} , 
             f'./Model/checkpoint_gpt.pt') 
 
-        scheduler.step()
         print('\nMean Loss : %.3f \t Mean Accuracy : %.3f\n' %(mean_loss.item(), mean_acc.item()))
     
     
@@ -171,19 +181,21 @@ if __name__ == '__main__' :
 
     # Training argument
     parser.add_argument('--seed', type=int, default=777, help='random seed (default: 777)')
-    parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train (default: 100)')
+    parser.add_argument('--epochs', type=int, default=30, help='number of epochs to train (default: 30)')
     parser.add_argument('--warmup_steps', type=int, default=2000, help='warmup steps of train (default: 2000)')
-    parser.add_argument('--max_size', type=int, default=128, help='max size of sequence (default: 128)')
+    parser.add_argument('--max_size', type=int, default=256, help='max size of sequence (default: 256)')
     parser.add_argument('--layer_size', type=int, default=12, help='layer size of model (default: 12)')
     parser.add_argument('--embedding_size', type=int, default=768, help='embedding size of token (default: 768)')
     parser.add_argument('--hidden_size', type=int, default=3072, help='hidden size of position-wise layer (default: 3072)')
     parser.add_argument('--head_size', type=int, default=12, help='head size of multi head attention (default: 12)')
     parser.add_argument('--batch_size', type=int, default=64, help='batch size for training (default: 64)')
+    parser.add_argument('--weight_decay', type=float, default=1e-4, help='weight decay of optimizer (default: 1e-4)')
 
     # Container environment
-    parser.add_argument('--data_dir', type=str, default='./Data/Version1.0')
+    parser.add_argument('--file_size', type=int, default=10, help='size of newspaper file')
+    parser.add_argument('--data_dir', type=str, default='./Data')
     parser.add_argument('--model_dir', type=str, default='./Model')
-    parser.add_argument('--token_dir', type=str, default='./Token')
+    parser.add_argument('--token_dir', type=str, default='./Tokenizer')
     parser.add_argument('--log_dir' , type=str , default='./Log')
 
     args = parser.parse_args()

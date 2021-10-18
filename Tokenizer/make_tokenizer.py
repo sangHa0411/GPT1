@@ -1,15 +1,17 @@
 import os
 import re
+import sys
 import argparse
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from konlpy.tag import Mecab
 
-from tokenizer import *
-from loader import *
-from preprocessor import *
+def make(args) :
+    sys.path.append('../')
+    from tokenizer import train_spm
+    from loader import get_data, preprocess_data
+    from preprocessor import SenPreprocessor
 
-def train(args) :
     print('Get Newspaper Data')
     data = get_data(args.data_dir, args.file_size)
 
@@ -34,7 +36,9 @@ def train(args) :
     for sen in tqdm(sen_data) :
         if len(sen) > args.max_size :
             continue
-        sen_preprocessed.append(sen_preprocessor(sen))
+        sen = sen_preprocessor(sen)
+        if sen != None :
+            sen_preprocessed.append(sen)
 
     print('Write Text Data')
     text_path = os.path.join(args.tokenizer_dir, 'kor_newspaper.txt')
@@ -52,5 +56,5 @@ if __name__ == '__main__' :
     parser.add_argument('--token_size', type=int, default=35000, help='Token Size (default: 35000)')
     args = parser.parse_args()
 
-    train(args)
+    make(args)
     

@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from tqdm import tqdm
 
 def read_data(file_path) :
@@ -10,6 +11,7 @@ def read_data(file_path) :
 def get_data(dir_path, size) :
     data_list = []
     file_list = os.listdir(dir_path)
+    assert size < len(file_list)
     for file in tqdm(file_list[:size]) :
         if file.endswith('.json') :
             try :

@@ -10,6 +10,8 @@ class Token(IntEnum) :
     UNK = 1
     SOS = 2
     EOS = 3
+    CLS = 4
+    SEP = 5
 
 class GptDataset(Dataset) :
     def __init__(self, idx_data, max_size) :

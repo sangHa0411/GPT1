@@ -7,7 +7,10 @@ class SenPreprocessor :
 
     def __call__(self, sen) :
         assert isinstance(sen, str)
-        tok_list = self.tokenizer.morphs(sen)
-        sen = ' '.join(tok_list)
-        return sen
+        try :
+            tok_list = self.tokenizer.morphs(sen)
+            sen = ' '.join(tok_list)
+            return sen
+        except ValueError as e :
+            return None
  
