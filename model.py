@@ -173,5 +173,5 @@ class TransformerDecoder(nn.Module) :
    
     def forward(self, id_tensor, pos_tensor, mask_tensor) :
         feature_tensor = self.get_feature(id_tensor, pos_tensor, mask_tensor)
-        o_tensor = self.o_layer(tensor_ptr)
+        o_tensor = self.o_layer(feature_tensor)
         return o_tensor
