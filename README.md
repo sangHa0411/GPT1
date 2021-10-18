@@ -2,21 +2,19 @@
 
 # Data Structure
 ```
-|-- Data
+.
+├── Log
+├── README.md
+├── Tokenizer
+│   ├── make_tokenizer.py
+│   └── tokenizer.py
+├── __pycache__
 ├── dataset.py
 ├── loader.py
 ├── model.py
 ├── preprocessor.py
-├── README.md
 ├── scheduler.py
-├── Tokenizer
-│   ├── kor_newspaper.txt
-│   ├── tokenizer.model
-│   └── tokenizer.vocab
-├── tokenizer.py
-├── train.py
-└── train_tokenizer.py
-
+└── train.py
 ```
 
 # Tokenizer Specification
