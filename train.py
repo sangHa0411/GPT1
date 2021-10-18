@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from konlpy.tag import Mecab
-from model import PaddingMask, LookAheadMask, TransformerDecoder
+from model import LookAheadMask, TransformerDecoder
 
 from dataset import *
 from loader import *
@@ -57,7 +57,7 @@ def train(args) :
 
     # -- Tokenizer & Encoder
     sys.path.append('./Tokenizer')
-    from tokenizer import *
+    from tokenizer import get_spm
     mecab = Mecab()
     sen_preprocessor = SenPreprocessor(mecab)
     tokenizer = get_spm(os.path.join(args.token_dir, 'tokenizer.model'))
@@ -87,7 +87,6 @@ def train(args) :
    
     # -- Model
     # Masking
-    padding_mask = PaddingMask()
     lookahead_mask = LookAheadMask(use_cuda)
     # Transformer Decoder
     gpt_1 = TransformerDecoder(
@@ -99,7 +98,6 @@ def train(args) :
         hidden_size=args.hidden_size,
         drop_rate=0.1,
         norm_rate=1e-6,
-        cuda_flag=use_cuda
     ).to(device)
 
     init_lr = 1e-4
@@ -138,13 +136,13 @@ def train(args) :
             writer.add_scalar('learning_rate', optimizer.param_groups[0]["lr"], idx)
 
             in_data = data['in'].long().to(device)
-            mask_data = padding_mask(in_data)
-            mask_data = lookahead_mask(mask_data)
+            pos_data = data['pos'].long().to(device)
+            mask_data = lookahead_mask(in_data)
 
             label_data = data['out'].long().to(device)
             label_data = torch.reshape(label_data, (-1,))
 
-            out_data = gpt_1(in_data, mask_data)
+            out_data = gpt_1(in_data, pos_data, mask_data)
             out_data = torch.reshape(out_data, (-1,v_size))
 
             loss = criterion(out_data , label_data)
@@ -193,8 +191,8 @@ if __name__ == '__main__' :
 
     # Container environment
     parser.add_argument('--file_size', type=int, default=10, help='size of newspaper file')
-    parser.add_argument('--data_dir', type=str, default='./Data')
-    parser.add_argument('--model_dir', type=str, default='./Model')
+    parser.add_argument('--data_dir', type=str, default='../Data')
+    parser.add_argument('--model_dir', type=str, default='../Model/GPT1')
     parser.add_argument('--token_dir', type=str, default='./Tokenizer')
     parser.add_argument('--log_dir' , type=str , default='./Log')
 
