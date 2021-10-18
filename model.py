@@ -4,16 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class PaddingMask(nn.Module) :
-    def __init__(self) :
-        super(PaddingMask , self).__init__() 
-    
-    def forward(self, in_tensor) :
-        batch_size, seq_size = in_tensor.shape
-        flag_tensor = torch.where(in_tensor == 0.0 , 1.0 , 0.0)
-        flag_tensor = torch.reshape(flag_tensor , (batch_size, 1, 1, seq_size)) 
-        return flag_tensor
-
 class LookAheadMask(nn.Module) :
     def __init__(self, cuda_flag) :
         super(LookAheadMask, self).__init__() 
@@ -22,58 +12,22 @@ class LookAheadMask(nn.Module) :
     def get_mask(self, sen_size) :
         mask_array = 1 - np.tril(np.ones((sen_size,sen_size)) , 0)
         mask_tensor = torch.tensor(mask_array , dtype = torch.float32 , requires_grad=False)
-        mask_tensor = mask_tensor.unsqueeze(0) # shape : (1, sen_size, sen_size)
+        mask_tensor = mask_tensor.unsqueeze(0)
         return mask_tensor
     
-    def forward(self, pad_mask) :
-        sen_size = pad_mask.shape[-1]
+    def padding_mask(self, in_tensor) :
+        batch_size, seq_size = in_tensor.shape
+        flag_tensor = torch.where(in_tensor == 0.0 , 1.0 , 0.0)
+        flag_tensor = torch.reshape(flag_tensor , (batch_size, 1, 1, seq_size)) 
+        return flag_tensor, seq_size
+
+    def forward(self, in_tensor,) :
+        pad_mask, sen_size = self.padding_mask(in_tensor)
         lookahead_mask = self.get_mask(sen_size)
         if self.cuda_flag :
             lookahead_mask = lookahead_mask.cuda() 
         lookahead_mask = torch.maximum(pad_mask, lookahead_mask)
         return lookahead_mask
-
-
-class PositionalEncoding(nn.Module) :
-    def __init__(self, max_len, d_model, cuda_flag) :
-        super(PositionalEncoding , self).__init__()
-        self.max_len = max_len
-        self.d_model = d_model
-        self.cuda_flag = cuda_flag
-        # w : weight
-        # pe : Encoding tensor
-        self.w = torch.sqrt(torch.tensor(d_model, dtype=torch.float32, requires_grad=False))
-        self.pe = self.get_embedding(max_len, d_model)
-        if cuda_flag == True :
-            self.w = self.w.cuda()
-            self.pe = self.pe.cuda()
-        
-    # Embedding tensor : (batch_size, sen_size, embedding_dim)
-    # Making Encoding tensor (1, sen_size, embedding_dim)
-    def get_embedding(self, pos_len, d_model) :
-        pos_vec = torch.arange(pos_len).float()
-        pos_vec = pos_vec.unsqueeze(1)
-
-        i_vec = torch.arange(d_model).float() / 2
-        i_vec = torch.floor(i_vec) * 2
-        i_vec = i_vec.unsqueeze(0) / d_model
-        i_vec = 1 / torch.pow(1e+4 , i_vec)
-
-        em = torch.mul(pos_vec, i_vec)
-        pe = torch.zeros(pos_len, d_model, requires_grad=False)
-        sin_em = torch.sin(em)
-        cos_em = torch.cos(em)
-
-        pe[:,::2] = sin_em[:,::2]
-        pe[:,1::2] = cos_em[:,1::2]
-
-        return pe.unsqueeze(0)
-
-    # input tensor : (batch_size, sen_size, embedding_dim)
-    def forward(self, in_tensor) :
-        batch_size, seq_size, em_dim = in_tensor.shape                  
-        en_tensor = (in_tensor * self.w) + self.pe[:,:seq_size,:]
-        return en_tensor
 
 # Multihead Attention Layer
 class MultiHeadAttention(nn.Module) :
@@ -177,7 +131,7 @@ class DecoderBlock(nn.Module) :
 
 # Transformer Decoder
 class TransformerDecoder(nn.Module) :
-    def __init__(self, layer_size, max_size, v_size, d_model, num_heads, hidden_size, drop_rate, norm_rate, cuda_flag) :
+    def __init__(self, layer_size, max_size, v_size, d_model, num_heads, hidden_size, drop_rate, norm_rate) :
         super(TransformerDecoder , self).__init__()
         self.layer_size = layer_size
         self.max_size = max_size
@@ -189,9 +143,7 @@ class TransformerDecoder(nn.Module) :
         self.norm_rate = norm_rate
         
         self.em = nn.Embedding(num_embeddings=v_size, embedding_dim=d_model, padding_idx=0) # embedding
-        self.pos = PositionalEncoding(max_size, d_model, cuda_flag)
-        self.pad = PaddingMask() # padding masking
-        self.lookahead = LookAheadMask(cuda_flag) # lookahead masking
+        self.pos_em = nn.Embedding(num_embeddings=max_size+1, embedding_dim=d_model, padding_idx=0) # positional embedding
         
         self.de_blocks = nn.ModuleList()
         self.drop_layer = nn.Dropout(drop_rate)
@@ -205,16 +157,21 @@ class TransformerDecoder(nn.Module) :
         for p in self.parameters() :
             if p.dim() > 1 :
                 nn.init.xavier_uniform_(p)
-   
-    def forward(self, in_tensor, mask_tensor) :
+
+    def get_feature(self, id_tensor, pos_tensor, mask_tensor) :
         # decoder input tensor
-        em_tensor = self.em(in_tensor) # embedding
-        de_tensor = self.pos(em_tensor) # positional encoding
-        de_tensor = self.drop_layer(de_tensor) # dropout layer
-        
-        tensor_ptr = de_tensor
+        em = self.em(id_tensor) # embedding
+        pos = self.pos_em(pos_tensor) # positional embedding
+
+        encoded = em+pos
+        encoded = self.drop_layer(encoded) # dropout layer
+    
+        tensor_ptr = encoded
         for i in range(self.layer_size) :
             tensor_ptr = self.de_blocks[i](tensor_ptr, mask_tensor)
+        return tensor_ptr
+   
+    def forward(self, id_tensor, pos_tensor, mask_tensor) :
+        feature_tensor = self.get_feature(id_tensor, pos_tensor, mask_tensor)
         o_tensor = self.o_layer(tensor_ptr)
-        
         return o_tensor
