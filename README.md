@@ -17,10 +17,16 @@
 └── train.py
 ```
 
+# Dependencies
+  1. pandas : '1.1.4'
+  2. numpy : '1.19.2' 
+  3. torch : '1.9.0+cu102'
+  4. konlpy : '0.5.2'
+
 # Tokenizer Specification
-  1. Subword Tokenizer
+  1. Subword Tokenizer : BPE
   2. Sentencepiece
-  3. Vocab size : 32000
+  3. Vocab size : 35000
   4. Special Token
       * PAD : 0
       * UNK : 1
@@ -29,19 +35,22 @@
       * CLS : 4
       * SEP : 5
 
-
-# Model Specification
-  1. GPT1 - Transformer Decoder
+# Model Configuration
+  1. BERT - Transformer Decoder Architecture
   2. Layer size : 12
   3. Embedding size : 768
   4. Hidden size : 3072
   5. Head size : 12
   6. Sequence size : 256
+  7. DropOut Rate : 1e-1
+  8. LayerNormalization : 1e-6
 
-# Training 
-  1. Epoch : 100
+# Training Configuration
+  1. Epoch : 30
   2. Warmup staps : 2000
   3. Optimizer : Adam
+        1. Betas : (0.9, 0.98)
+        2. Weight Decay : 1e-4
   4. Batch size : 64
 
 # Source

@@ -1,6 +1,7 @@
 import sys
 import random
 import re
+import os
 import argparse
 import multiprocessing
 import numpy as np
@@ -16,16 +17,16 @@ from nltk.tokenize import sent_tokenize
 from konlpy.tag import Mecab
 from model import LookAheadMask, TransformerDecoder
 
-from dataset import *
-from loader import *
-from scheduler import *
-from preprocessor import *
+from dataset import GptDataset, GptCollator
+from loader import get_data, preprocess_data
+from scheduler import Scheduler
+from preprocessor import SenPreprocessor
 
 def progressLearning(value, endvalue, loss, acc, bar_length=50):
     percent = float(value + 1) / endvalue
     arrow = '-' * int(round(percent * bar_length)-1) + '>'
     spaces = ' ' * (bar_length - len(arrow))
-    sys.stdout.write("\r[{0}] {1}/{2} \t Loss : {3:.3f} , Acc : {4:.3f}".format(arrow + spaces, value+1, endvalue, loss, acc))
+    sys.stdout.write("\r[{0}] {1}/{2} - Loss : {3:.3f} , Acc : {4:.3f}".format(arrow + spaces, value+1, endvalue, loss, acc))
     sys.stdout.flush()
 
 def seed_everything(seed):
@@ -86,7 +87,7 @@ def train(args) :
     )
    
     # -- Model
-    # Masking
+    # Attention Mask
     lookahead_mask = LookAheadMask(use_cuda)
     # Transformer Decoder
     gpt_1 = TransformerDecoder(
